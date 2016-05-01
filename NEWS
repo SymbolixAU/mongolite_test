@@ -1,0 +1,44 @@
+0.8.2
+ - BREAKING: ObjectID fields are now returned as strings instead of raw vectors
+ - Make 'mongo' objects serializable (persistent between R sessions)
+ - New function 'mongo_log_level' to set debugging verbosity
+ - Add 'list' and 'json' support for m$insert()
+ - Update mongo-c-driver to 1.3.5
+
+0.8.1
+ - Update mongo-c-driver to 1.3.4
+
+0.8
+ - Update mongo-c-driver to 1.3.1
+ - Fix for snow leopard (no strnlen)
+
+0.7
+ - Added mongolabs example that runs with R CMD check
+ - Update mongo-c-driver to 1.3.0
+ - Link to OpenSSL 1.0.2d on Windows
+ - Backport workaround GNU extension in mongoc-util-private.h:34
+ - Link to brew openssl 1.0.2 on OSX instead of native 0.9.8
+
+0.6
+ - Update mongo-c-driver to db120a3526
+ - Workaround GNU extension in mongoc-util-private.h:34
+ - Fix for m$export() on windows (UTF8 related)
+ - Fix for setInternet2 in R 3.3.0 on Windows
+
+0.5
+ - Update mongo-c-driver and libbson to 1.1.10
+ - New method 'iterate' to retrieve records without simplification
+ - POSIXt timestamps and raw vectors are inserted as native types
+ - Fix for authentication to database specified in the 'url'
+
+0.4:
+ - Add support for export() and import()
+ - Update mongo-c-driver and libbson to 1.1.7
+ - Make 'verbose' parameter global
+
+0.3
+ - Update mongo-c-driver and libbson to 1.1.5
+ - Add support for map-reduce
+
+0.2
+ - Initial release

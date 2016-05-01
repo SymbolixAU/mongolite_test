@@ -1,0 +1,109 @@
+#!/bin/bash
+# Anticonf (tm) script by Jeroen Ooms (2015)
+# This script will query 'pkg-config' for the required cflags and ldflags.
+# If pkg-config is unavailable or does not find the library, try setting
+# INCLUDE_DIR and LIB_DIR manually via e.g:
+# R CMD INSTALL --configure-vars='INCLUDE_DIR=/.../include LIB_DIR=/.../lib'
+
+# Library settings
+PKG_CONFIG_NAME="openssl"
+PKG_DEB_NAME="libssl-dev, libsasl2-dev"
+PKG_RPM_NAME="openssl-devel, cyrus-sasl-devel"
+PKG_CSW_NAME="libssl_dev, sasl_dev"
+PKG_BREW_NAME="openssl"
+PKG_TEST_1="<openssl/evp.h>"
+PKG_TEST_2="<sasl/sasl.h>"
+SASL_LIBS="-lsasl2"
+
+# Hack for solaris
+if [ $(uname) = "SunOS" ]; then
+  SASL_LIBS="-lsasl"
+fi
+
+# Default
+PKG_LIBS="-lssl -lcrypto $SASL_LIBS"
+
+# Use pkg-config if available
+if [ $(command -v pkg-config) ]; then
+  PKGCONFIG_CFLAGS="$(pkg-config --cflags ${PKG_CONFIG_NAME})"
+  PKGCONFIG_LIBS="$SASL_LIBS $(pkg-config --libs ${PKG_CONFIG_NAME})"
+fi
+
+# Note that cflags may be empty in case of success
+if [ "$INCLUDE_DIR" ] || [ "$LIB_DIR" ]; then
+  echo "Found INCLUDE_DIR and/or LIB_DIR!"
+  PKG_CFLAGS="-I$INCLUDE_DIR $PKG_CFLAGS"
+  PKG_LIBS="-L$LIB_DIR $PKG_LIBS"
+elif [ "$PKGCONFIG_CFLAGS" ] || [ "$PKGCONFIG_LIBS" ]; then
+  echo "Found pkg-config cflags and libs!"
+  PKG_CFLAGS=${PKGCONFIG_CFLAGS}
+  PKG_LIBS=${PKGCONFIG_LIBS}
+fi
+
+# OpenSSL on OSX 10.11 is deprecated but currently keg-only in brew (not linked)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  if [ $(command -v brew) ]; then
+    BREWDIR=$(brew --prefix)
+  else
+    BREWDIR="/tmp/homebrew"
+    rm -Rf $BREWDIR
+    mkdir -p $BREWDIR
+    echo "Auto-brewing $PKG_BREW_NAME in $BREWDIR..."
+    curl -fsSL https://github.com/Homebrew/homebrew/tarball/master | tar xz --strip 1 -C $BREWDIR
+    HOMEBREW_CACHE="/tmp" $BREWDIR/bin/brew install --force-bottle $PKG_BREW_NAME 2>&1 | perl -pe 's/Warning/Note/gi'
+    rm -f $BREWDIR/Cellar/$PKG_BREW_NAME/*/lib/*.dylib
+    rm -f $BREWDIR/opt/$PKG_BREW_NAME/lib/*.dylib
+  fi
+  PKG_CFLAGS="$PKG_CFLAGS -I$BREWDIR/opt/$PKG_BREW_NAME/include"
+  PKG_LIBS="$PKG_CFLAGS -L$BREWDIR/opt/$PKG_BREW_NAME/lib $PKG_LIBS"
+fi
+
+# Apple has deprecated SASL but there is no alternative yet
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  PKG_CFLAGS="$PKG_CFLAGS -Wno-deprecated-declarations"
+fi
+
+# For debugging
+echo "Using PKG_CFLAGS=$PKG_CFLAGS"
+echo "Using PKG_LIBS=$PKG_LIBS"
+
+# Find compiler
+CC=$(${R_HOME}/bin/R CMD config CC)
+CFLAGS=$(${R_HOME}/bin/R CMD config CFLAGS)
+CPPFLAGS=$(${R_HOME}/bin/R CMD config CPPFLAGS)
+
+# Test configuration
+echo "#include $PKG_TEST_1" | ${CC} ${CPPFLAGS} ${PKG_CFLAGS} ${CFLAGS} -E -xc - >/dev/null 2>&1 || R_CONFIG_ERROR=1;
+echo "#include $PKG_TEST_2" | ${CC} ${CPPFLAGS} ${PKG_CFLAGS} ${CFLAGS} -E -xc - >/dev/null 2>&1 || R_CONFIG_ERROR=1;
+
+# Customize the error
+if [ $R_CONFIG_ERROR ]; then
+  echo "------------------------- ANTICONF ERROR ---------------------------"
+  echo "Configuration failed because $PKG_CONFIG_NAME/sasl was not found. Try installing:"
+  echo " * deb: $PKG_DEB_NAME (Debian, Ubuntu, etc)"
+  echo " * rpm: $PKG_RPM_NAME (Fedora, CentOS, RHEL)"
+  echo " * csw: $PKG_CSW_NAME (Solaris)"
+  echo " * brew: $PKG_BREW_NAME (Mac OSX)"
+  echo "If $PKG_CONFIG_NAME is already installed, check that 'pkg-config' is in your"
+  echo "PATH and PKG_CONFIG_PATH contains a $PKG_CONFIG_NAME.pc file. If pkg-config"
+  echo "is unavailable you can set INCLUDE_DIR and LIB_DIR manually via:"
+  echo "R CMD INSTALL --configure-vars='INCLUDE_DIR=... LIB_DIR=...'"
+  echo "--------------------------------------------------------------------"
+  exit 1;
+fi
+
+# Feature test for 'sasl_client_done'
+cd src
+${CC} ./tests/has_sasl_client_done.c ${CPPFLAGS} ${PKG_CFLAGS} ${CFLAGS} ${PKG_LIBS} >/dev/null 2>&1 && HAS_SASL_CLIENT_DONE=1;
+if [ $HAS_SASL_CLIENT_DONE ]; then
+  echo "SASL has sasl_client_done"
+  PKG_CFLAGS="$PKG_CFLAGS -DMONGOC_HAVE_SASL_CLIENT_DONE"
+else
+  echo "SASL does not have sasl_client_done"
+fi
+
+# Write to Makevars
+sed -e "s|@cflags@|$PKG_CFLAGS|" -e "s|@libs@|$PKG_LIBS|" Makevars.in > Makevars
+
+# Success
+exit 0
