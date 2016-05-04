@@ -103,10 +103,10 @@ SEXP R_mongo_cursor_next_page(SEXP ptr, SEXP size){
     total++;
   }
 
-  printf("list length: %d\n", length(list));  // length of the list is the pagesize
+  //printf("list length: %d\n", length(list));  // length of the list is the pagesize
 
   //printf("size: %d\n", size);
-  printf("total: %d\n", total);
+  //printf("total: %d\n", total);
 
   //iterator exhausted
   if(total == 0){

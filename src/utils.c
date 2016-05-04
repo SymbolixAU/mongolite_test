@@ -33,7 +33,7 @@ SEXP bson2list(bson_t *b){
   // http://api.mongodb.org/libbson/current/bson_iter_init.html
   bson_iter_init(&iter1, b);
   bson_iter_init(&iter2, b);
-
+  //printf("address: %p\n", (void*)&iter1);
   // iter1 & iter2 are the same...
   return ConvertObject(&iter1, &iter2);
 }

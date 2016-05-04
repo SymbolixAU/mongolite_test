@@ -148,10 +148,12 @@ SEXP ConvertObject(bson_iter_t* iter, bson_iter_t* counter){
   for (int i = 0; bson_iter_next(iter); i++) {
     // iterates
 
-    //printf( "Key: %s\n",  bson_iter_key(iter) );
+    printf( "Key: %s\n",  bson_iter_key(&iter) );
 
     SET_STRING_ELT(names, i, mkChar(bson_iter_key(iter)));
+
     //printf("address: %p\n", (void*)&iter);
+
     SET_VECTOR_ELT(ret, i, ConvertValue(iter));
     //SET_VECTOR_ELT(ret, i, ConvertValue(iter));
     //printf("i: %d\n", i);
