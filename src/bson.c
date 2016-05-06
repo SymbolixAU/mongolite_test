@@ -121,24 +121,29 @@ SEXP ConvertArray(bson_iter_t* iter, bson_iter_t* counter){
 }
 
 SEXP ConvertObject(bson_iter_t* iter, bson_iter_t* counter){
+
+  const bson_value_t *value;
+  bson_type_t type;
+
   //printf("convertObject\n");  // called for each document in cursor
   SEXP names;
   SEXP ret;
+
   int count = 0;
-//  int count2 = 0;
+  //  int count2 = 0;
   while(bson_iter_next(counter)){
     // counts records in individual collection
     // i.e. the number of 'columns' to return
     count++;
   }
   // checking if iter1 & iter2 are the same
-//  while(bson_iter_next(iter)){
-//    // counts records in individual collection
-//    // i.e. the number of 'columns' to return
-//    count2++;
-//  }
-//  printf("count: %d\n", count);   // count = number of records (columns) in the document
-//  printf("count2: %d\n", count2);   // count = number of records (columns) in the document
+  //  while(bson_iter_next(iter)){
+  //    // counts records in individual collection
+  //    // i.e. the number of 'columns' to return
+  //    count2++;
+  //  }
+  //  printf("count: %d\n", count);   // count = number of records (columns) in the document
+  //  printf("count2: %d\n", count2);   // count = number of records (columns) in the document
 
   //http://adv-r.had.co.nz/C-interface.html
   // allocVector() creates an R-level object
@@ -148,16 +153,26 @@ SEXP ConvertObject(bson_iter_t* iter, bson_iter_t* counter){
   for (int i = 0; bson_iter_next(iter); i++) {
     // iterates
 
-    printf( "Key: %s\n",  bson_iter_key(&iter) );
+    //printf( "Key: %s\n",  bson_iter_key(iter) );
 
     SET_STRING_ELT(names, i, mkChar(bson_iter_key(iter)));
 
-    //printf("address: %p\n", (void*)&iter);
+    //http://stackoverflow.com/questions/28557541/c-accessing-value-type-when-iterating-bson
+    printf ("Found element key: \"%s\"\n", bson_iter_key (iter));
+    type = bson_iter_type (iter);
+    printf("type %d\n", (int)type);
+    value = bson_iter_value (iter);
+    printf("Found values of type %d\n", value -> value_type);
+
+
+
+    printf("address: %p\n", (void*)&iter);
+    value = bson_iter_value (iter);
 
     SET_VECTOR_ELT(ret, i, ConvertValue(iter));
     //SET_VECTOR_ELT(ret, i, ConvertValue(iter));
-    //printf("i: %d\n", i);
-
+    printf("i: %d\n", i);
+    //printf("ret: %s\n", ret);
     // TO DO?
     // store the type of the first iter
     // move the pointer to an array
@@ -167,20 +182,25 @@ SEXP ConvertObject(bson_iter_t* iter, bson_iter_t* counter){
     // outsie of this loop, convert the columns of the array to vectors?/a representaion of an r data.table?
     // cast the whole column/vector in one go, based on the type stored from the first iter.
 
+
+    // step 1
+    // - at i == 1, create a vector of the types of each data element.
+
+
   }
 
-//  printf("ret.length: %d\n", length(ret));   // length is the number of columns
-//  for(int x = 0; x < ret.Length; x++){
-//    values[x] = Convert.ToInt32(array[x].ToString());
-//  }
+  //  printf("ret.length: %d\n", length(ret));   // length is the number of columns
+  //  for(int x = 0; x < ret.Length; x++){
+  //    values[x] = Convert.ToInt32(array[x].ToString());
+  //  }
 
   // convert vector
 
   setAttrib(ret, R_NamesSymbol, names);
 
-//  for (int i=0; i < (sizeof (ret) /sizeof (ret[0])); i++) {
-//    printf("%lf\n",ret[i]);
-//  }
+  //  for (int i=0; i < (sizeof (ret) /sizeof (ret[0])); i++) {
+  //    printf("%lf\n",ret[i]);
+  //  }
 
   UNPROTECT(2);
   return ret;
