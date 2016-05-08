@@ -6,7 +6,7 @@ SEXP R_mongo_client_server_status(SEXP ptr_client) {
   mongoc_client_t *client = r2client(ptr_client);
   if(!mongoc_client_get_server_status(client, NULL, &reply, &err))
     stop(err.message);
-  return bson2list(&reply);
+  return bson2list(&reply, -1);
 }
 
 SEXP R_mongo_client_new(SEXP uri_string) {

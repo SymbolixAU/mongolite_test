@@ -116,7 +116,7 @@ SEXP R_mongo_collection_insert_page(SEXP ptr_col, SEXP json_vec, SEXP stop_on_er
   }
 
   //get output
-  SEXP out = PROTECT(bson2list(&reply));
+  SEXP out = PROTECT(bson2list(&reply, -1));
   bson_destroy (&reply);
   UNPROTECT(1);
   return out;
@@ -177,7 +177,7 @@ SEXP R_mongo_collection_command_simple(SEXP ptr_col, SEXP command){
   if(!mongoc_collection_command_simple(col, cmd, NULL, &reply, &err))
     stop(err.message);
 
-  SEXP out = PROTECT(bson2list(&reply));
+  SEXP out = PROTECT(bson2list(&reply, -1));
   bson_destroy (&reply);
   UNPROTECT(1);
   return out;
@@ -190,7 +190,7 @@ SEXP R_mongo_collection_stats(SEXP ptr_col){
   if(!mongoc_collection_stats(col, NULL, &reply, &err))
     stop(err.message);
 
-  SEXP out = PROTECT(bson2list(&reply));
+  SEXP out = PROTECT(bson2list(&reply, -1));
   bson_destroy (&reply);
   UNPROTECT(1);
   return out;

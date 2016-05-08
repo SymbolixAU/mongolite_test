@@ -166,8 +166,8 @@ mongo_cursor_next_bsonlist <- function(cursor, n = 1){
 
 #' @useDynLib mongolite R_mongo_cursor_next_page
 mongo_cursor_next_page <- function(cursor, size = 100){
-  print(cursor)
-  print(str(cursor))
+  #print(cursor)
+  #print(str(cursor))
   .Call(R_mongo_cursor_next_page, cursor, size = size)
 }
 

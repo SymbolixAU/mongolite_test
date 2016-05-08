@@ -86,6 +86,15 @@ SEXP R_mongo_cursor_next_json (SEXP ptr, SEXP n){
 }
 
 
+// need to just iterate over one BSON document
+
+//SEXP R_mongo_cursor_find_one(SEXP ptr){
+//  mongoc_cursor_t *c = r2cursor(ptr);
+//  const bson_t *b = NULL;
+//  SEXP value_types = PROTECT(allocVector(STRSXP, 1))
+//}
+
+
 SEXP R_mongo_cursor_next_page(SEXP ptr, SEXP size){
   mongoc_cursor_t *c = r2cursor(ptr);
   int n = asInteger(size);
@@ -99,7 +108,8 @@ SEXP R_mongo_cursor_next_page(SEXP ptr, SEXP size){
     // iterates the underlying cursor, setting bson to the next document
 
     // for each BSON document, call utils::bson2list
-    SET_VECTOR_ELT(list, i, bson2list((bson_t*) b));
+    SET_VECTOR_ELT(list, i, bson2list((bson_t*) b, total));
+    printf("list: %s\n ", list);
     total++;
   }
 

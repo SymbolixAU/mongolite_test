@@ -1,7 +1,7 @@
 #include <mongolite.h>
 
 SEXP ConvertArray(bson_iter_t* iter, bson_iter_t* counter);
-SEXP ConvertObject(bson_iter_t* iter, bson_iter_t* counter);
+SEXP ConvertObject(bson_iter_t* iter, bson_iter_t* counter, int total);
 SEXP ConvertValue(bson_iter_t* iter);
 SEXP ConvertBinary(bson_iter_t* iter);
 SEXP ConvertDate(bson_iter_t* iter);
@@ -37,7 +37,7 @@ SEXP R_bson_to_raw(SEXP ptr){
 
 SEXP R_bson_to_list(SEXP ptr) {
   bson_t *b = r2bson(ptr);
-  return bson2list(b);
+  return bson2list(b, -1);
 }
 
 SEXP ConvertValue(bson_iter_t* iter){
@@ -70,12 +70,12 @@ SEXP ConvertValue(bson_iter_t* iter){
     bson_iter_recurse (iter, &child1);
     bson_iter_recurse (iter, &child2);
     return ConvertArray(&child1, &child2);
-  } else if(BSON_ITER_HOLDS_DOCUMENT(iter)){
-    bson_iter_t child1;
-    bson_iter_t child2;
-    bson_iter_recurse (iter, &child1);
-    bson_iter_recurse (iter, &child2);
-    return ConvertObject(&child1, &child2);
+//  } else if(BSON_ITER_HOLDS_DOCUMENT(iter)){
+//    bson_iter_t child1;
+//    bson_iter_t child2;
+//    bson_iter_recurse (iter, &child1);
+//    bson_iter_recurse (iter, &child2);
+//    return ConvertObject(&child1, &child2, -1);
   } else {
     stop("Unimplemented BSON type %d\n", bson_iter_type(iter));
   }
@@ -120,14 +120,14 @@ SEXP ConvertArray(bson_iter_t* iter, bson_iter_t* counter){
   return ret;
 }
 
-SEXP ConvertObject(bson_iter_t* iter, bson_iter_t* counter){
+SEXP ConvertObject(bson_iter_t* iter, bson_iter_t* counter, int total){
 
   const bson_value_t *value;
   bson_type_t type;
 
-  //printf("convertObject\n");  // called for each document in cursor
   SEXP names;
   SEXP ret;
+  SEXP types;
 
   int count = 0;
   //  int count2 = 0;
@@ -149,30 +149,33 @@ SEXP ConvertObject(bson_iter_t* iter, bson_iter_t* counter){
   // allocVector() creates an R-level object
   PROTECT(ret = allocVector(VECSXP, count));      //VECSXP = lsit
   PROTECT(names = allocVector(STRSXP, count));    //STRSXP = character vector
+  //PROTECT(types = allocVector(STRSXP, count));
 
   for (int i = 0; bson_iter_next(iter); i++) {
     // iterates
-
-    //printf( "Key: %s\n",  bson_iter_key(iter) );
-
     SET_STRING_ELT(names, i, mkChar(bson_iter_key(iter)));
 
     //http://stackoverflow.com/questions/28557541/c-accessing-value-type-when-iterating-bson
     printf ("Found element key: \"%s\"\n", bson_iter_key (iter));
     type = bson_iter_type (iter);
-    printf("type %d\n", (int)type);
-    value = bson_iter_value (iter);
-    printf("Found values of type %d\n", value -> value_type);
-
-
+    //printf("type %d\n", (int)type);  // also prints out the type
+//    value = bson_iter_value (iter);
+//    printf("value of type %d\n", value -> value_type);
 
     printf("address: %p\n", (void*)&iter);
     value = bson_iter_value (iter);
 
     SET_VECTOR_ELT(ret, i, ConvertValue(iter));
-    //SET_VECTOR_ELT(ret, i, ConvertValue(iter));
     printf("i: %d\n", i);
-    //printf("ret: %s\n", ret);
+
+
+    //if i == 1, record types
+    if ( total == 0 ) { // the first document
+      value = bson_iter_value (iter);
+      printf("value type: %d\n", value -> value_type);
+    }
+      //SET_VECTOR_ELT(types, i, value_type)
+
     // TO DO?
     // store the type of the first iter
     // move the pointer to an array
@@ -182,10 +185,8 @@ SEXP ConvertObject(bson_iter_t* iter, bson_iter_t* counter){
     // outsie of this loop, convert the columns of the array to vectors?/a representaion of an r data.table?
     // cast the whole column/vector in one go, based on the type stored from the first iter.
 
-
     // step 1
     // - at i == 1, create a vector of the types of each data element.
-
 
   }
 
@@ -197,10 +198,6 @@ SEXP ConvertObject(bson_iter_t* iter, bson_iter_t* counter){
   // convert vector
 
   setAttrib(ret, R_NamesSymbol, names);
-
-  //  for (int i=0; i < (sizeof (ret) /sizeof (ret[0])); i++) {
-  //    printf("%lf\n",ret[i]);
-  //  }
 
   UNPROTECT(2);
   return ret;

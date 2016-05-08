@@ -23,19 +23,21 @@ SEXP mkRaw(const unsigned char *buf, int len){
 
 // bson_iter_t is a document iterator
 // http://api.mongodb.org/libbson/current/bson_iter_t.html
-SEXP bson2list(bson_t *b){
+SEXP bson2list(bson_t *b, int total){
   // create document iterators
   bson_iter_t iter1;
   bson_iter_t iter2;
 
+  //printf("total: %d\n", total);
   //bson_iter_init initialises iter to iterate on the
   //BSON document
   // http://api.mongodb.org/libbson/current/bson_iter_init.html
   bson_iter_init(&iter1, b);
   bson_iter_init(&iter2, b);
+
   //printf("address: %p\n", (void*)&iter1);
   // iter1 & iter2 are the same...
-  return ConvertObject(&iter1, &iter2);
+  return ConvertObject(&iter1, &iter2, total);
 }
 
 bson_t* r2bson(SEXP ptr){
