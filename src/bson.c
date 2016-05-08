@@ -136,14 +136,6 @@ SEXP ConvertObject(bson_iter_t* iter, bson_iter_t* counter, int total){
     // i.e. the number of 'columns' to return
     count++;
   }
-  // checking if iter1 & iter2 are the same
-  //  while(bson_iter_next(iter)){
-  //    // counts records in individual collection
-  //    // i.e. the number of 'columns' to return
-  //    count2++;
-  //  }
-  //  printf("count: %d\n", count);   // count = number of records (columns) in the document
-  //  printf("count2: %d\n", count2);   // count = number of records (columns) in the document
 
   //http://adv-r.had.co.nz/C-interface.html
   // allocVector() creates an R-level object
@@ -165,7 +157,9 @@ SEXP ConvertObject(bson_iter_t* iter, bson_iter_t* counter, int total){
     printf("address: %p\n", (void*)&iter);
     value = bson_iter_value (iter);
 
+    //printf("iter type %s\n", bson_iter_type(iter));  // crashes
     SET_VECTOR_ELT(ret, i, ConvertValue(iter));
+    //SET_VECTOR_ELT(ret, i, iter);
     printf("i: %d\n", i);
 
 
@@ -173,11 +167,11 @@ SEXP ConvertObject(bson_iter_t* iter, bson_iter_t* counter, int total){
     if ( total == 0 ) { // the first document
       value = bson_iter_value (iter);
       printf("value type: %d\n", value -> value_type);
+      //SET_VECTOR_ELT(types, i, value -> value_type)
     }
-      //SET_VECTOR_ELT(types, i, value_type)
 
     // TO DO?
-    // store the type of the first iter
+    // store the type of the first iter √√√
     // move the pointer to an array
     // if a bson document doesn't have a value, set it to NULL??
     // add to the array for each iter
@@ -189,6 +183,9 @@ SEXP ConvertObject(bson_iter_t* iter, bson_iter_t* counter, int total){
     // - at i == 1, create a vector of the types of each data element.
 
   }
+
+  // convert objects absed on types.
+
 
   //  printf("ret.length: %d\n", length(ret));   // length is the number of columns
   //  for(int x = 0; x < ret.Length; x++){

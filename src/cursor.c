@@ -109,7 +109,6 @@ SEXP R_mongo_cursor_next_page(SEXP ptr, SEXP size){
 
     // for each BSON document, call utils::bson2list
     SET_VECTOR_ELT(list, i, bson2list((bson_t*) b, total));
-    printf("list: %s\n ", list);
     total++;
   }
 
