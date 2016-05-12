@@ -166,13 +166,14 @@ SEXP ConvertObject(bson_iter_t* iter, bson_iter_t* counter, int total){
     //if i == 1, record types
     if ( total == 0 ) { // the first document
       value = bson_iter_value (iter);
+      printf("value: %s\n", value);
       printf("value type: %d\n", value -> value_type);
       //SET_VECTOR_ELT(types, i, value -> value_type)
     }
 
     // TO DO?
     // store the type of the first iter √√√
-    // move the pointer to an array
+    // move the pointer to an array / vector?
     // if a bson document doesn't have a value, set it to NULL??
     // add to the array for each iter
     // return the array
